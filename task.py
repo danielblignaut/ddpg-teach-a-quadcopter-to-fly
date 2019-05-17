@@ -47,3 +47,6 @@ class Task():
         self.sim.reset()
         state = np.concatenate([self.sim.pose] * self.action_repeat) 
         return state
+    
+    def get_target_pos(self) :
+        return self.target_pos
