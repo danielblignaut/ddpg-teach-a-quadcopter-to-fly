@@ -74,7 +74,7 @@ class MyTask():
         #reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum()
         penalty_constant = -2
         reward_constant = 1
-        distance_to_target = get_distance_to_target_by_index(self.current_target_index)
+        distance_to_target = self.get_distance_to_target_by_index(self.current_target_index)
         reward = distance_to_target * penalty_constant + reward_constant * self.current_target_index
 
         #TODO: add a penalty for time to promote completion speed
