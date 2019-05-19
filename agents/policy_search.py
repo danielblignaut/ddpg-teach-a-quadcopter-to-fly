@@ -18,6 +18,7 @@ class PolicySearch_Agent():
         # Score tracker and learning parameters
         self.best_w = None
         self.best_score = -np.inf
+        self.score = -np.inf
         self.noise_scale = 0.1
 
         # Episode variables
