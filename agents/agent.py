@@ -5,7 +5,7 @@ from lib.noise import OUNoise
 import numpy as np
 class DDPG():
     """Reinforcement Learning agent that learns using DDPG."""
-    def __init__(self, task):
+    def __init__(self, task, greedy_agent= False):
         self.task = task
         self.state_size = task.state_size
         self.action_size = task.action_size
@@ -27,7 +27,7 @@ class DDPG():
         # Noise process
         self.exploration_mu = 0
         self.exploration_theta = 0.15
-        self.exploration_sigma = 0.2
+        self.exploration_sigma = 0.001
         self.noise = OUNoise(self.action_size, self.exploration_mu, self.exploration_theta, self.exploration_sigma)
 
         # Replay memory
@@ -37,21 +37,32 @@ class DDPG():
 
         # Algorithm parameters
         self.gamma = 0.99  # discount factor
-        self.tau = 0.01  # for soft update of target parameters
+        self.tau = 0.1  # for soft update of target parameters
 
         #scoring measures
         self.best_score = -np.inf
         self.score = 0
-		
+
+        #be greedy or not!
+        self.greedy_agent = greedy_agent
+    
+    def set_greedy_agent(self, greedy_agent) :
+        self.greedy_agent = greedy_agent
 
     def reset_episode(self):
-        self.noise.reset()
         self.score = 0
+
+        self.noise.reset()
         state = self.task.reset()
         self.last_state = state
         return state
 
     def step(self, action, reward, next_state, done):
+        self.score += reward
+
+        if(done and self.score > self.best_score) : 
+            self.best_score = self.score
+
          # Save experience / reward
         self.memory.add(self.last_state, action, reward, next_state, done)
 
@@ -62,21 +73,21 @@ class DDPG():
 
         # Roll over last state and action
         self.last_state = next_state
-
-        self.score += reward
-
-        if(done and self.score > self.best_score) : 
-            self.best_score = self.score
+        
 
 
     def act(self, state):
         """Returns actions for given state(s) as per current policy."""
         state = np.reshape(state, [-1, self.state_size])
         action = self.actor_local.model.predict(state)[0]
+
+      
         return list(action + self.noise.sample())  # add some noise for exploration
 
     def learn(self, experiences):
         """Update policy and value parameters using given batch of experience tuples."""
+
+        
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
         states = np.vstack([e.state for e in experiences if e is not None])
         actions = np.array([e.action for e in experiences if e is not None]).astype(np.float32).reshape(-1, self.action_size)
