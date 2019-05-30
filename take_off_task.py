@@ -16,7 +16,7 @@ class TakeOffTask():
         """
         # Simulation
         self.sim = PhysicsSim(init_pose, init_velocities, init_angle_velocities, runtime) 
-        self.action_repeat = 3
+        self.action_repeat = 10
 
         self.state_size = self.action_repeat * 6
         self.action_low = 0
@@ -34,44 +34,15 @@ class TakeOffTask():
 
     def get_reward(self):
         """Uses current pose of sim to return reward."""
-        absolute_distance_constant = -5
-        survival_constant = -0.5
-        #x_distance_constant = -2
-        #y_distance_constant = -2
-        #z_distance_constant = -2
-        radian = 0.0174533
+        relative_distance_constant = 4
+        angular_velociy_constant = -1
+
         distance_to_target = self.get_distance_to_target(self.sim.pose[:3], self.target_pos[:3])
-        reward = 0.5 * (self.initial_distance - distance_to_target)
-        
-        if(self.sim.pose[2] > 0) :
-            reward += 200
+        reward = relative_distance_constant * np.tanh(self.initial_distance - distance_to_target)
 
-        #constant rewaard
-        #reward = 100
+        reward += angular_velociy_constant * abs(self.sim.angular_v[0]) + abs(self.sim.angular_v[1]) + abs(self.sim.angular_v[1])
 
-        #penalty for general distance to tareget
-        #reward += absolute_distance_constant * abs(distance_to_target)
 
-        #penalty for euler angle changes... we want to maintain stability
-        #reward += -2 * abs(self.sim.pose[3:6]).sum()
-
-        #penalty for big euler angle changes... we want to maintain stability
-        #reward += -5 * abs(self.sim.angular_v).sum()
-
-        
-
-        #reward = x_distance_constant * abs(self.sim.pose[0] - self.target_pos[0])
-        #reward += y_distance_constant * abs(self.sim.pose[1] - self.target_pos[1]) 
-        #reward += z_distance_constant * abs(self.sim.pose[2] - self.target_pos[2])
-        #reward += survival_constant * self.survived_number_of_rounds
-        #reward += -1 * (self.sim.pose[3] - 90 * radian)
-        #reward += -1 * (self.sim.pose[4] - 90 * radian)
-        #reward += -1 * (self.sim.pose[5] - 90 * radian)
-
-        #print("distance reward: {:7.3f}, survival reward: {:7.3f}, ".format(penalty_constant * distance_to_target, survival_constant * self.survived_number_of_rounds))
-        #TODO: add a penalty for time to promote completion speed
-        #TODO: add a penalty / reward for slower velocity over time when within a certain area of reward that outweighs time constraint
-        
         return reward
 
     def step(self, rotor_speeds):
@@ -82,6 +53,7 @@ class TakeOffTask():
             done = self.sim.next_timestep(rotor_speeds) # update the sim pose and velocities
             reward += self.get_reward() 
             pose_all.append(self.sim.pose)
+
         next_state = np.concatenate(pose_all)
 
         if(self.get_distance_to_target(self.sim.pose[:3],self.target_pos) < .1) :
@@ -92,7 +64,9 @@ class TakeOffTask():
     def reset(self):
         """Reset the sim to start a new episode."""
         self.sim.reset()
-        state = np.concatenate([self.sim.pose] * self.action_repeat) 
+        
+        state = np.concatenate([self.sim.pose] * self.action_repeat)
+
         return state
     
     def get_target_pos(self) :

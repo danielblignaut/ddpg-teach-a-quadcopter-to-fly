@@ -27,42 +27,14 @@ class Actor:
     def build_model(self):
         """Build an actor (policy) network that maps states -> actions."""
         # Define input layer (states)
-        #states = layers.Input(shape=(self.state_size,), name='states')
-        # Add hidden layers
-        #net = layers.Dense(units=32, activation='relu')(states)
-        #net = layers.Dense(units=64, activation='relu')(net)
-        #net = layers.Dense(units=128, activation='relu')(net)
-        
-        # define the input layer & reshape input into a tuple
         states = layers.Input(shape=(self.state_size,), name='states')
 
-        net = layers.Reshape((10,6))(states)
+        # Add hidden layers
+        net = layers.Dense(units=32, activation='relu')(states)
+        net = layers.Dense(units=64, activation='relu')(net)
+        net = layers.Dense(units=32, activation='relu')(net)
 
-        
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
-        net = layers.Conv1D(32, kernel_size=2)(net)
-        net = layers.ReLU()(net)
-        net = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)(net)
-        net = layers.Dropout(0.2)(net)
-
-        net = layers.Conv1D(64, kernel_size=2)(net)
-        net = layers.ReLU()(net)
-        net = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)(net)
-        net = layers.Dropout(0.2)(net)
-
-        net = layers.MaxPooling1D(2)(net)
-
-        net = layers.Conv1D(64, kernel_size=2)(net)
-        net = layers.ReLU()(net)
-        net = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)(net)
-        net = layers.Dropout(0.2)(net)
-
-        net = layers.Conv1D(64, kernel_size=2)(net)
-        net = layers.ReLU()(net)
-        net = layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)(net)
-        net = layers.Dropout(0.2)(net)
-
-        net = layers.GlobalAveragePooling1D()(net)
 
         # Add final output layer with sigmoid activation
         raw_actions = layers.Dense(units=self.action_size, activation='sigmoid',
